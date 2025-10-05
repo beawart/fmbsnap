@@ -15,14 +15,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: "npm"
 
-      - name: Cache Node.js modules
+      - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node-
+            ${{ runner.os }}-playwright-
 
       - name: Install dependencies
         run: npm ci
@@ -31,7 +32,17 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run screenshot script
-        run: node scripts/screenshot.js
+        id: screenshot
+        run: |
+          set -e
+          node scripts/screenshot.js || (
+            echo "❌ Screenshot script failed, capturing debug info..."
+            # Save page content if available
+            echo "<!-- Debug dump -->" > debug.html
+            # Touch a dummy screenshot if script didn't produce one
+            touch debug.png
+            exit 1
+          )
         env:
           WEBSITE_USER: ${{ secrets.WEBSITE_USER }}
           WEBSITE_PASS: ${{ secrets.WEBSITE_PASS }}
@@ -40,16 +51,23 @@ jobs:
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
 
-      - name: Upload screenshot artifact
+      # Always upload artifacts, even on failure
+      - name: Upload debug artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: homepage-screenshot
-          path: homepage.png
-          retention-days: 7
+          name: debug-artifacts
+          path: |
+            homepage.png
+            landing.png
+            debug.png
+            debug.html
+          retention-days: 3
 
   send:
     runs-on: ubuntu-latest
     needs: capture
+    if: success() # only send if capture succeeded
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -60,6 +78,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci

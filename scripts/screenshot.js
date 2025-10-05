@@ -28,7 +28,11 @@ async function markOtpAsRead(messageId) {
   const page = await browser.newPage();
 
   // Step 1: Login with email + ITS
-  await page.goto('https://my.fmbmelbourne.com.au/');
+  await page.goto('https://my.fmbmelbourne.com.au/', { waitUntil: 'networkidle' });
+  // Debug: take a screenshot of what CI sees
+  await page.screenshot({ path: 'landing.png', fullPage: true });
+
+  await page.waitForSelector('input[name="email"]', { timeout: 60000 });
   await page.fill('input[name="email"]', process.env.WEBSITE_USER);
   await page.fill('input[name="its"]', process.env.WEBSITE_PASS);
   await page.click('button[type="submit"]');
