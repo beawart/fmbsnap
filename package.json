@@ -1,0 +1,14 @@
+{
+  "name": "daily-screenshot-pipeline",
+  "version": "1.0.0",
+  "scripts": {
+    "screenshot": "node scripts/screenshot.js",
+    "send": "node scripts/send-whatsapp.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "googleapis": "^126.0.1",
+    "playwright": "^1.49.0",
+    "twilio": "^5.0.0"
+  }
+}
