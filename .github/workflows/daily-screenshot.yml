@@ -57,11 +57,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: homepage-screenshot
-          path: |
-            homepage.png
-            landing.png
-            debug.png
-            debug.html
+          path: homepage.jpg
+          # name: homepage-screenshot
+          # path: |
+          #   homepage.png
+          #   landing.png
+          #   debug.png
+          #   debug.html
           retention-days: 3
 
   send:
