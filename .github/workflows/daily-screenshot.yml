@@ -57,7 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: homepage-screenshot
-          path: homepage.jpg
+          path: homepage.png
           # name: homepage-screenshot
           # path: |
           #   homepage.png
