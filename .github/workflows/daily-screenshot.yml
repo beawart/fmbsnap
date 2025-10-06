@@ -69,6 +69,8 @@ jobs:
     needs: capture
     if: success() # only send if capture succeeded
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: homepage-screenshot
@@ -79,6 +81,7 @@ jobs:
         with:
           node-version: 18
           cache: "npm"
+
       - name: Debug repo contents
         run: ls -la
 
