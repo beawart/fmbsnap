@@ -1,20 +1,17 @@
 require('dotenv').config();
 const twilio = require('twilio');
-const path = require('path');
 
 (async () => {
   const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
 
-  // Twilio requires a public URL for media.
-  // Simplest option: use GitHub artifact download URL or push to a storage bucket.
-  // For demo, we’ll just send text + placeholder.
+  // GitHub provides a run URL via environment variables
+  const runUrl = `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+
   await client.messages.create({
     from: `whatsapp:${process.env.WHATSAPP_FROM}`,
     to: `whatsapp:${process.env.WHATSAPP_TO}`,
-    body: 'Here is today’s homepage screenshot 📸',
-    // Replace with a real URL to the uploaded screenshot
-    mediaUrl: ['https://example.com/path/to/homepage.png']
+    body: `✅ Daily run complete! Homepage screenshot captured.\n\nDownload it here: ${runUrl}`
   });
 
-  console.log('✅ Screenshot sent to WhatsApp');
+  console.log('📩 WhatsApp notification sent with artifact link');
 })();

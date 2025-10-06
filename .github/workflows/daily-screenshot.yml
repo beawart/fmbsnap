@@ -52,11 +52,11 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
 
       # Always upload artifacts, even on failure
-      - name: Upload debug artifacts
+      - name: Upload screenshot artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: debug-artifacts
+          name: homepage-screenshot
           path: |
             homepage.png
             landing.png
@@ -83,10 +83,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Send screenshot via WhatsApp
+      - name: Send WhatsApp notification
         run: node scripts/send-whatsapp.js
         env:
           TWILIO_SID: ${{ secrets.TWILIO_SID }}
           TWILIO_AUTH: ${{ secrets.TWILIO_AUTH }}
           WHATSAPP_FROM: ${{ secrets.WHATSAPP_FROM }}
           WHATSAPP_TO: ${{ secrets.WHATSAPP_TO }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
