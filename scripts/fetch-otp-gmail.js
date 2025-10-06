@@ -1,5 +1,26 @@
-require('dotenv').config();
 const { google } = require('googleapis');
+
+function decodeBody(payload) {
+  // Prefer text/plain; fallback to text/html (strip tags)
+  if (payload.parts && Array.isArray(payload.parts)) {
+    for (const part of payload.parts) {
+      if (part.mimeType === 'text/plain' && part.body?.data) {
+        return Buffer.from(part.body.data, 'base64').toString('utf8');
+      }
+    }
+    for (const part of payload.parts) {
+      if (part.mimeType === 'text/html' && part.body?.data) {
+        const html = Buffer.from(part.body.data, 'base64').toString('utf8');
+        return html.replace(/<[^>]*>/g, ' ');
+      }
+    }
+  }
+  if (payload.body?.data) {
+    const raw = Buffer.from(payload.body.data, 'base64').toString('utf8');
+    return payload.mimeType === 'text/html' ? raw.replace(/<[^>]*>/g, ' ') : raw;
+  }
+  return '';
+}
 
 async function fetchOtpFromGmail(maxAttempts = 12, delayMs = 10000) {
   const oAuth2Client = new google.auth.OAuth2(
@@ -10,40 +31,40 @@ async function fetchOtpFromGmail(maxAttempts = 12, delayMs = 10000) {
 
   const gmail = google.gmail({ version: 'v1', auth: oAuth2Client });
 
+  // Strict query to avoid picking up year/time from headers
+  // - unread
+  // - subject contains "OTP Verification" (handles FW/RE implicitly)
+  // - from sender noreply@fmbmelbourne.com.au
+  // - newer_than to avoid stale emails
+  const query =
+    'is:unread subject:"OTP Verification" from:noreply@fmbmelbourne.com.au newer_than:3h';
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     console.log(`🔎 Checking Gmail for OTP (attempt ${attempt}/${maxAttempts})...`);
 
     const res = await gmail.users.messages.list({
       userId: process.env.GMAIL_USER,
-      maxResults: 5,
-      q: 'is:unread',
+      maxResults: 10,
+      q: query,
     });
 
-    if (res.data.messages && res.data.messages.length > 0) {
-      for (const m of res.data.messages) {
-        const msg = await gmail.users.messages.get({
-          userId: process.env.GMAIL_USER,
-          id: m.id,
-        });
+    const messages = res.data.messages || [];
+    // Process newest first
+    for (const m of messages.reverse()) {
+      const msg = await gmail.users.messages.get({
+        userId: process.env.GMAIL_USER,
+        id: m.id,
+      });
 
-        let body = '';
-        if (msg.data.payload.parts) {
-          for (const part of msg.data.payload.parts) {
-            if (part.mimeType === 'text/plain' && part.body.data) {
-              body += Buffer.from(part.body.data, 'base64').toString();
-            }
-          }
-        } else if (msg.data.payload.body?.data) {
-          body = Buffer.from(msg.data.payload.body.data, 'base64').toString();
-        }
+      const body = decodeBody(msg.data.payload || {});
+      // Tight regex: only capture digits after the OTP phrase
+      const phraseRegex = /your\s+otp[^0-9]*?(\d{4,8})/i;
+      const match = phraseRegex.exec(body);
 
-        const otpRegex = /\b\d{4,8}\b/;
-        const match = otpRegex.exec(body);
-
-        if (match) {
-          console.log(`✅ OTP found: ${match[0]}`);
-          return { otp: match[0], messageId: m.id };
-        }
+      if (match && match[1]) {
+        const otp = match[1];
+        console.log(`✅ OTP found: ${otp}`);
+        return { otp, messageId: m.id };
       }
     }
 
