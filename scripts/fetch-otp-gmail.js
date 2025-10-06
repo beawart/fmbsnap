@@ -36,8 +36,10 @@ async function fetchOtpFromGmail(maxAttempts = 12, delayMs = 10000) {
   // - subject contains "OTP Verification" (handles FW/RE implicitly)
   // - from sender noreply@fmbmelbourne.com.au
   // - newer_than to avoid stale emails
-  const query =
-    'is:unread subject:"OTP Verification" from:noreply@fmbmelbourne.com.au newer_than:3h';
+//   const query =
+//     'is:unread subject:"OTP Verification" from:noreply@fmbmelbourne.com.au newer_than:3h';
+    const query = 'is:unread subject:OTP newer_than:3h';
+
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     console.log(`🔎 Checking Gmail for OTP (attempt ${attempt}/${maxAttempts})...`);
