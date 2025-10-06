@@ -59,9 +59,9 @@ async function markOtpAsRead(messageId) {
   await page.waitForLoadState('networkidle');
 
   // Step 6: Mark OTP email as read
-  if (messageId) {
-    await markOtpAsRead(messageId);
-  }
+  // if (messageId) {
+  //   await markOtpAsRead(messageId);
+  // }
 
   // Step 7: Capture screenshot
   console.log('📸 Capturing homepage screenshot...');
