@@ -5,14 +5,14 @@ const twilio = require('twilio');
   const client = twilio(process.env.TWILIO_SID, process.env.TWILIO_AUTH);
 
   // GitHub provides a run URL via environment variables
-const artifactUrl = `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}#artifacts`;
+const publicUrl = `https://${process.env.GITHUB_REPOSITORY.split('/')[0]}.github.io/${process.env.GITHUB_REPOSITORY.split('/')[1]}/homepage.png`;
 
 await client.messages.create({
   from: `whatsapp:${process.env.WHATSAPP_FROM}`,
   to: `whatsapp:${process.env.WHATSAPP_TO}`,
-  body: `✅ Daily screenshot ready!\n\nDownload it here: ${artifactUrl}`
+  body: '✅ Daily screenshot ready!',
+  mediaUrl: [publicUrl]
 });
-
 
   console.log('📩 WhatsApp notification sent with artifact link');
 })();
