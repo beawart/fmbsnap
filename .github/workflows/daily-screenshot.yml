@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write # needed so gh-pages deploy can push
 
 jobs:
   capture:
@@ -40,9 +40,7 @@ jobs:
           set -e
           node scripts/screenshot.js || (
             echo "❌ Screenshot script failed, capturing debug info..."
-            # Save page content if available
             echo "<!-- Debug dump -->" > debug.html
-            # Touch a dummy screenshot if script didn't produce one
             touch debug.png
             exit 1
           )
@@ -54,44 +52,26 @@ jobs:
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
 
-      # Always upload artifacts, even on failure
-      - name: Upload screenshot artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: homepage-screenshot
-          path: homepage.png
-          # name: homepage-screenshot
-          # path: |
-          #   homepage.png
-          #   landing.png
-          #   debug.png
-          #   debug.html
-          retention-days: 3
+      - name: Prepare Pages folder
+        run: |
+          mkdir public
+          cp homepage.png public/
 
       - name: Deploy screenshot to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: .
-          keep_files: true
+          publish_dir: ./public
           force_orphan: true
-          # Only publish the screenshot
-          exclude_assets: |
-            !homepage.png
+          keep_files: false
 
   send:
     runs-on: ubuntu-latest
     needs: capture
-    if: success() # only send if capture succeeded
+    if: success()
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: homepage-screenshot
-          path: .
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -99,12 +79,8 @@ jobs:
           node-version: 18
           cache: "npm"
 
-      - name: Debug repo contents
-        run: ls -la
-
       - name: Install dependencies
         run: npm ci
-        working-directory: .
 
       - name: Send WhatsApp notification
         run: node scripts/send-whatsapp.js
@@ -114,4 +90,3 @@ jobs:
           WHATSAPP_FROM: ${{ secrets.WHATSAPP_FROM }}
           WHATSAPP_TO: ${{ secrets.WHATSAPP_TO }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
