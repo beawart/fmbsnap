@@ -85,6 +85,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Wait for GitHub Pages to deploy
+        run: sleep 60
+
       - name: Send WhatsApp notification
         run: node scripts/send-whatsapp.js
         env:
