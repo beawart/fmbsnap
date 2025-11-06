@@ -1,4 +1,4 @@
-# Daily FMB Screenshot to WhatsApp
+# Daily FMB Screenshot
 
 App to create a snap of FMB menu for each day
 
@@ -11,9 +11,6 @@ This repository contains a GitHub Actions workflow that:
 
 - Add the following secrets in your GitHub repo:
   - `WEBSITE_USER` / `WEBSITE_PASS`
-  - `TWILIO_SID` / `TWILIO_AUTH`
-  - `WHATSAPP_FROM` (Twilio sandbox number, e.g. `whatsapp:+14155238886`)
-  - `WHATSAPP_TO` (your group or personal number)
 
 ## Run
 
